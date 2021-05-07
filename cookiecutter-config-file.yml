@@ -1,0 +1,10 @@
+# This file contains values from Cookiecutter
+
+default_context:
+  project_name: "wyze-rtsp-bridge"
+  project_description: "AA server that transcodes wyze native video streams to rtsp"
+  organization: "kroo"
+  license: "MIT"
+  version: "0.1.0"
+  github_name: "kroo"
+  email: "elliot@kroo.net"
