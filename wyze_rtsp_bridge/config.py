@@ -1,5 +1,5 @@
 import pathlib
-from typing import Optional
+from typing import Optional, List
 
 import pydantic
 import yaml
@@ -19,6 +19,7 @@ class Config(pydantic.BaseModel):
     wyze_credentials: WyzeCredentialConfig
     rtsp_server: WyzeRtspBridgeConfig = WyzeRtspBridgeConfig()
     db_path: str = str(pathlib.Path("~/.wyzecam/wyze_rtsp_bridge.db").expanduser())
+    cameras: Optional[List[str]] = None
 
 
 _project_root = pathlib.Path(__file__).parent.parent

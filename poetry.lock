@@ -28,11 +28,11 @@ python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 
 [[package]]
 name = "attrs"
-version = "21.1.0"
+version = "21.2.0"
 description = "Classes Without Boilerplate"
 category = "dev"
 optional = false
-python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
+python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
 
 [package.extras]
 dev = ["coverage[toml] (>=5.0.2)", "hypothesis", "pympler", "pytest (>=4.3.0)", "six", "mypy", "pytest-mypy-plugins", "zope.interface", "furo", "sphinx", "sphinx-notfound-page", "pre-commit"]
@@ -450,7 +450,7 @@ testing = ["argcomplete", "hypothesis (>=3.56)", "mock", "nose", "requests", "xm
 
 [[package]]
 name = "pyupgrade"
-version = "2.14.0"
+version = "2.15.0"
 description = "A tool to automatically upgrade syntax for newer versions."
 category = "dev"
 optional = false
@@ -591,7 +591,7 @@ sqlcipher = ["sqlcipher3-binary"]
 
 [[package]]
 name = "sqlalchemy2-stubs"
-version = "0.0.1a9"
+version = "0.0.1a10"
 description = "Typing Stubs for SQLAlchemy 1.4"
 category = "main"
 optional = false
@@ -704,15 +704,20 @@ python-versions = "*"
 
 [[package]]
 name = "wyzecam"
-version = "1.0.1"
+version = "1.1.0"
 description = "Python package for communicating with wyze cameras over the local network"
 category = "main"
 optional = false
-python-versions = ">=3.8,<4.0"
+python-versions = "^3.8"
+develop = false
 
 [package.dependencies]
-pydantic = ">=1.8.1,<2.0.0"
-xxtea = ">=2.0.0.post0,<3.0.0"
+pydantic = "^1.8.1"
+xxtea = "^2.0.0.post0"
+
+[package.source]
+type = "directory"
+url = "../wyzecam"
 
 [[package]]
 name = "xxtea"
@@ -725,7 +730,7 @@ python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "6c6154c6f53c67de84597cd153f30be36a7d3727f3045c95dead9c6e120f41ad"
+content-hash = "b531a7b6855c45c5152ef2a91e8928365db256bc03c7e973e8061f400245b480"
 
 [metadata.files]
 appdirs = [
@@ -741,8 +746,8 @@ atomicwrites = [
     {file = "atomicwrites-1.4.0.tar.gz", hash = "sha256:ae70396ad1a434f9c7046fd2dd196fc04b12f9e91ffb859164193be8b6168a7a"},
 ]
 attrs = [
-    {file = "attrs-21.1.0-py2.py3-none-any.whl", hash = "sha256:8ee1e5f5a1afc5b19bdfae4fdf0c35ed324074bdce3500c939842c8f818645d9"},
-    {file = "attrs-21.1.0.tar.gz", hash = "sha256:3901be1cb7c2a780f14668691474d9252c070a756be0a9ead98cfeabfa11aeb8"},
+    {file = "attrs-21.2.0-py2.py3-none-any.whl", hash = "sha256:149e90d6d8ac20db7a955ad60cf0e6881a3f20d37096140088356da6c716b0b1"},
+    {file = "attrs-21.2.0.tar.gz", hash = "sha256:ef6aaac3ca6cd92904cdd0d83f629a15f18053ec84e6432106f7a4d04ae4f5fb"},
 ]
 bandit = [
     {file = "bandit-1.7.0-py3-none-any.whl", hash = "sha256:216be4d044209fa06cf2a3e51b319769a51be8318140659719aa7a115c35ed07"},
@@ -1010,8 +1015,8 @@ pytest = [
     {file = "pytest-6.2.4.tar.gz", hash = "sha256:50bcad0a0b9c5a72c8e4e7c9855a3ad496ca6a881a3641b4260605450772c54b"},
 ]
 pyupgrade = [
-    {file = "pyupgrade-2.14.0-py2.py3-none-any.whl", hash = "sha256:19bd23babd4c09171be66d393d83a53e5ae8d54c6534001c4b7ad92c4d560d69"},
-    {file = "pyupgrade-2.14.0.tar.gz", hash = "sha256:34f5dfa57d8007f6cd455a0a423e06e96753b07e4711bac63e3d5c4f3af97cea"},
+    {file = "pyupgrade-2.15.0-py2.py3-none-any.whl", hash = "sha256:ad702e234082aace280164ff8f7fd151b042f66572b2d78730d60bd984a81fdc"},
+    {file = "pyupgrade-2.15.0.tar.gz", hash = "sha256:05579badd8d3cfbbc93fb60f910c9259961bf24a75f8689d399eaf46bedb7401"},
 ]
 pyyaml = [
     {file = "PyYAML-5.4.1-cp27-cp27m-macosx_10_9_x86_64.whl", hash = "sha256:3b2b1824fe7112845700f815ff6a489360226a5609b96ec2190a45e62a9fc922"},
@@ -1148,8 +1153,8 @@ sqlalchemy = [
     {file = "SQLAlchemy-1.4.14.tar.gz", hash = "sha256:fcea0af70a356fdff9efa917d33ec5a8538fe7bde3004ceded7377f1a97d8ef3"},
 ]
 sqlalchemy2-stubs = [
-    {file = "sqlalchemy2-stubs-0.0.1a9.tar.gz", hash = "sha256:67401e955d9db140e5dc2e3e32f22e2da1cce3c2c76495f0f7e86df251498822"},
-    {file = "sqlalchemy2_stubs-0.0.1a9-py3-none-any.whl", hash = "sha256:ee166eaaa73e368c40e23cb1d1b21588689c6a1af091fbab014256022f14b13e"},
+    {file = "sqlalchemy2-stubs-0.0.1a10.tar.gz", hash = "sha256:6bc4d5e6a18c1080388a237f224c304957aed5397c5931ef97d037c1eea432fc"},
+    {file = "sqlalchemy2_stubs-0.0.1a10-py3-none-any.whl", hash = "sha256:3bfdac04026533fe42363f97cbe5ef03dc38d7b8faf8d9373f6396d9b5080aa7"},
 ]
 stevedore = [
     {file = "stevedore-3.3.0-py3-none-any.whl", hash = "sha256:50d7b78fbaf0d04cd62411188fa7eedcb03eb7f4c4b37005615ceebe582aa82a"},
@@ -1215,10 +1220,7 @@ virtualenv = [
 wrapt = [
     {file = "wrapt-1.12.1.tar.gz", hash = "sha256:b62ffa81fb85f4332a4f609cab4ac40709470da05643a082ec1eb88e6d9b97d7"},
 ]
-wyzecam = [
-    {file = "wyzecam-1.0.1-py3-none-any.whl", hash = "sha256:f0b0d921f02caee6b9d63e440b0c3ae9c95f264e0c3d78cafdf33326823ee069"},
-    {file = "wyzecam-1.0.1.tar.gz", hash = "sha256:d2548cf8e2b7c6f2da870b2f18d52b531709bfea49771ee0264ef1b76e4e0512"},
-]
+wyzecam = []
 xxtea = [
     {file = "xxtea-2.0.0.post0-cp27-cp27m-macosx_10_6_intel.whl", hash = "sha256:8ea9e115fd249b047ba7e5f6c6c1bc6d1b656139d70031f802468f3d609e3001"},
     {file = "xxtea-2.0.0.post0-cp27-cp27m-manylinux1_i686.whl", hash = "sha256:8ffe1038ba2a77e826df8748a3e48f789b707e34f3e6c9f8ccc45391b60a250c"},
