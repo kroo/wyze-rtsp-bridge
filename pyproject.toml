@@ -7,7 +7,7 @@ build-backend = "poetry.core.masonry.api"
 [tool.poetry]
 name = "wyze-rtsp-bridge"
 version = "0.1.0"
-description = "AA server that transcodes wyze native video streams to rtsp"
+description = "A server that transcodes wyze native video streams to rtsp"
 readme = "README.md"
 authors = [
   "kroo <elliot@kroo.net>"
@@ -20,7 +20,7 @@ homepage = "https://github.com/kroo/wyze-rtsp-bridge"
 keywords = []  # Update me
 
 # Pypi classifiers: https://pypi.org/classifiers/
-classifiers = [  # Update me
+classifiers = [# Update me
   "Development Status :: 3 - Alpha",
   "Intended Audience :: Developers",
   "Operating System :: OS Independent",
@@ -32,22 +32,25 @@ classifiers = [  # Update me
 "wyze-rtsp-bridge" = "wyze_rtsp_bridge.__main__:app"
 
 [tool.poetry.dependencies]
-python = "^3.7"
-importlib_metadata = {version = "^1.6.0", python = "<3.8"}
-typer = {extras = ["all"], version = "^0.3.2"}
-rich = "^9.8.2"
+python = "^3.8"
+importlib_metadata = { version = "^1.6.0", python = "<3.8" }
+typer = { extras = ["all"], version = "^0.3.2" }
+rich = "^10.1.0"
+wyzecam = "^1.0.1"
+PyGObject = "^3.40.1"
+SQLAlchemy = {extras = ["mypy"], version = "^1.4.14"}
 
 [tool.poetry.dev-dependencies]
 darglint = "^1.5.8"
 isort = "^5.7.0"
 pyupgrade = "^2.7.4"
-black = "^20.8b1"
-mypy = "^0.790"
+black = "^21.5b0"
+mypy = "^0.812"
 bandit = "^1.7.0"
 safety = "^1.10.3"
 pytest = "^6.2.1"
 pylint = "^2.6.0"
-pydocstyle = "^5.1.1"
+pydocstyle = "^6.0.0"
 pre-commit = "^2.9.3"
 
 [tool.black]

@@ -12,7 +12,7 @@
 [![Semantic Versions](https://img.shields.io/badge/%F0%9F%9A%80-semantic%20versions-informational.svg)](https://github.com/kroo/wyze-rtsp-bridge/releases)
 [![License](https://img.shields.io/github/license/kroo/wyze-rtsp-bridge)](https://github.com/kroo/wyze-rtsp-bridge/blob/master/LICENSE)
 
-AA server that transcodes wyze native video streams to rtsp
+A server that transcodes wyze native video streams to rtsp
 
 </div>
 
@@ -358,7 +358,7 @@ This project is licensed under the terms of the `MIT` license. See [LICENSE](htt
 ```
 @misc{wyze-rtsp-bridge,
   author = {kroo},
-  title = {AA server that transcodes wyze native video streams to rtsp},
+  title = {A server that transcodes wyze native video streams to rtsp},
   year = {2021},
   publisher = {GitHub},
   journal = {GitHub repository},
