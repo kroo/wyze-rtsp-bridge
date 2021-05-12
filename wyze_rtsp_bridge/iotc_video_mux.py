@@ -8,7 +8,8 @@ from queue import Queue
 from threading import Thread
 from typing import List, Dict, Tuple, Optional, Callable
 
-from wyzecam import WyzeIOTC, WyzeCamera, WyzeIOTCSession, WyzeAccount
+from wyzecam.iotc import WyzeIOTC, WyzeIOTCSession, WyzeIOTCSessionState
+from wyzecam.api_models import WyzeCamera, WyzeAccount
 from wyzecam.tutk import tutk
 from wyzecam.tutk.tutk import FrameInfoStruct
 
@@ -77,7 +78,7 @@ class WyzeIOTCVideoMux:
             time.sleep(0.1)
 
     def print_state_change(self, listener, new_state):
-        print(f"{listener.camera.mac} -> {new_state.name}")
+        print(f"{listener.camera.mac}  {listener.state.name} -> {new_state.name}")
         if new_state == WyzeIOTCVideoListenerState.FATAL_ERROR:
             print(f"\tError: {listener.error}")
 
@@ -130,6 +131,7 @@ class WyzeIOTCVideoListener(Thread):
         self.error: Optional[Exception] = None
         self.data_available_listeners: Dict[
             int, Callable[['WyzeIOTCVideoListener'], None]] = {}
+        self.retries = 0
 
     def add_state_change_listener(self,
                                   listener: Callable[
@@ -144,9 +146,12 @@ class WyzeIOTCVideoListener(Thread):
     @state.setter
     def state(self, new_state: WyzeIOTCVideoListenerState) -> None:
         with self.state_lock:
-            self._state = new_state
             for listener in self.state_change_listeners:
                 listener(self, new_state)
+            self._state = new_state
+
+        if new_state == WyzeIOTCVideoListenerState.CONNECTED:
+            self.retries = 0
 
     def transition_state(self,
                          condition: Callable[[WyzeIOTCVideoListenerState], bool],
@@ -154,21 +159,46 @@ class WyzeIOTCVideoListener(Thread):
 
         with self.state_lock:
             if condition(self._state):
-                self._state = new_state
                 for listener in self.state_change_listeners:
                     listener(self, new_state)
+                self._state = new_state
 
     def run(self) -> None:
         while True:
             self.connect_and_start_streaming()
+            self.retries += 1
+            if self.retries > 7:
+                self.retries = 7
             if self.state == WyzeIOTCVideoListenerState.DISCONNECTED:
                 break
-            time.sleep(5)
+
+            # exponential backoff up to 128 seconds (2 ** 7)
+            for _ in range(2 ** self.retries):
+                time.sleep(1)
+                self.transition_state(lambda old: old == WyzeIOTCVideoListenerState.DISCONNECT_REQUESTED,
+                                      WyzeIOTCVideoListenerState.DISCONNECTED)
+                if self.state == WyzeIOTCVideoListenerState.DISCONNECTED:
+                    break
+            print(f"Reconnecting to {self.camera.mac} retry={self.retries}")
 
     def connect_and_start_streaming(self):
         self.state = WyzeIOTCVideoListenerState.CONNECTING
+        self.error = None
         try:
             with self.session:
+                if self.state == WyzeIOTCVideoListenerState.DISCONNECT_REQUESTED:
+                    return
+
+                session_info = self.session.session_check()
+                if session_info.mode != 2:
+                    warning = Warning(
+                        f"Refusing to use non-LAN mode to connect to session for"
+                        f" camera {self.camera.mac} (was using mode={session_info.mode})")
+                    warnings.warn(warning)
+                    self.error = warning
+                    self.state = WyzeIOTCVideoListenerState.FATAL_ERROR
+                    return
+
                 # read one frame, and safe the frame info data for later use
                 _, self.example_frame_info = next(self.session.recv_video_data())
 
@@ -184,7 +214,6 @@ class WyzeIOTCVideoListener(Thread):
                     else:
                         time.sleep(LISTENER_SLEEP_INTERVAL)
         except tutk.TutkError as e:
-            traceback.print_exc()
             self.error = e
             self.state = WyzeIOTCVideoListenerState.FATAL_ERROR
         self.transition_state(lambda old: old == WyzeIOTCVideoListenerState.DISCONNECT_REQUESTED,
@@ -217,7 +246,6 @@ class WyzeIOTCVideoListener(Thread):
     def subscribe(self, subscriber_id: int,
                   callback: Optional[Callable[['WyzeIOTCVideoListener'], None]] = None) -> None:
         if subscriber_id in self.subscribers:
-            warnings.warn(f"Double-subscribed to camera {self.camera.mac} with subscriber_id {subscriber_id}")
             return
 
         self.subscribers[subscriber_id] = queue.Queue(maxsize=self.max_queue_size)
@@ -248,7 +276,12 @@ class WyzeIOTCVideoListener(Thread):
         return items
 
     def disconnect(self):
-        if self.state in [WyzeIOTCVideoListenerState.DISCONNECTED,
-                          WyzeIOTCVideoListenerState.FATAL_ERROR]:
+        if self.state in [WyzeIOTCVideoListenerState.DISCONNECTED]:
             return
+
+        if self.state == WyzeIOTCVideoListenerState.CONNECTING and \
+            self.session.state == WyzeIOTCSessionState.IOTC_CONNECTING:
+            tutk.iotc_connect_stop_by_session_id(
+                self.session.tutk_platform_lib, self.session.session_id)
+
         self.state = WyzeIOTCVideoListenerState.DISCONNECT_REQUESTED

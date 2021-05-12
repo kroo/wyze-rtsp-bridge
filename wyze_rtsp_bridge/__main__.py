@@ -47,13 +47,17 @@ def main(
         help="Prints the version of the wyze-rtsp-bridge package.",
     ),
 
-    cameras: str = None
+    cameras: str = None,
+
+    port: int = 8554
 ):
     """Prints a greeting for a giving name."""
 
     conf = config.load_config()
     if cameras is not None:
         conf.cameras = cameras.split(",")
+    if port is not None:
+        conf.rtsp_server.port = port
     s = GstServer(conf)
     s.startup()
     s.attach_to_main_loop()

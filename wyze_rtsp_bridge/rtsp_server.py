@@ -7,11 +7,12 @@ import signal
 import wyzecam
 from rich.live import Live
 from rich.table import Table
+from rich.errors import LiveError
 from wyzecam import api, api_models
 from wyzecam.iotc import WyzeIOTC
 from wyzecam.tutk import tutk
 
-from glib_init import loop, GstRtspServer
+from .glib_init import loop, GstRtspServer
 from wyze_rtsp_bridge import config
 from wyze_rtsp_bridge.db import db
 from wyze_rtsp_bridge.db.db import WyzeRtspDatabase
@@ -44,13 +45,18 @@ class GstServer:
 
         self.is_shutting_down = True
         self.mux.stop(block=False)
-        with Live(self.camera_statuses(title="Shutting down"), refresh_per_second=4) as live:
-            while self.mux.is_any_connected():
-                time.sleep(0.1)
-                live.update(self.camera_statuses(title="Shutting down"))
+        while self.mux.is_any_connected():
+            try:
+                with Live(self.camera_statuses(title="Shutting down"), refresh_per_second=4) as live:
+                    while self.mux.is_any_connected():
+                        time.sleep(0.25)
+                        live.update(self.camera_statuses(title="Shutting down"))
+            except LiveError:
+                pass
 
         self.iotc.deinitialize()
         loop.quit()
+        sys.exit(0)
 
     def init_db(self):
         self.db.open()
@@ -126,7 +132,9 @@ class GstServer:
         self.mux.start()
         with Live(self.camera_statuses(), refresh_per_second=4) as live:
             while not self.mux.is_all_connected():
-                time.sleep(0.25)
+                time.sleep(0.1)
+                if self.is_shutting_down:
+                    break
                 live.update(self.camera_statuses())
 
     def configure_mount_points(self):

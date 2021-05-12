@@ -8,7 +8,7 @@ from typing import Tuple, List, Dict
 from wyzecam import WyzeIOTC, WyzeCamera
 from wyzecam.tutk import tutk
 
-from glib_init import GstRtspServer, Gst
+from .glib_init import GstRtspServer, Gst
 from wyze_rtsp_bridge.iotc_video_mux import WyzeIOTCVideoMux, WyzeIOTCVideoListener
 
 
@@ -89,12 +89,10 @@ class WyzeCameraMediaFactory(GstRtspServer.RTSPMediaFactory):
 
     def enough_data(self, apprc, ctx):
         ctx.need_data = False
-        print("enough data")
 
     def need_data(self, appsrc, unused_length, ctx):
         self.send_data(appsrc, ctx)
         ctx.need_data = True
-        print("need data")
 
     def do_create_element(self, url):
         print(f"Create stream: {url.abspath}")
@@ -103,9 +101,9 @@ class WyzeCameraMediaFactory(GstRtspServer.RTSPMediaFactory):
         frame_info = self.mux.get_sample_frame_info(mac)
         assert frame_info
         if frame_info.codec_id == 78:
-            pipeline_str = f"( appsrc name=mysrc ! rtph264pay name=pay0 pt=96 )"
+            pipeline_str = f"( appsrc name=mysrc max-latency=100 ! rtph264pay name=pay0 pt=96 )"
         else:
-            pipeline_str = f"( appsrc name=mysrc ! rtph265pay name=pay0 pt=96 )"
+            pipeline_str = f"( appsrc name=mysrc max-latency=100 ! rtph265pay name=pay0 pt=96 )"
         launch = Gst.parse_launch(pipeline_str)
         appsrc = launch.get_by_name_recurse_up("mysrc")
         appsrc.mac = mac
@@ -127,6 +125,9 @@ class WyzeCameraMediaFactory(GstRtspServer.RTSPMediaFactory):
                f"framerate={framerate}/1," \
                f"stream-format=byte-stream,alignment=au"
         appsrc.set_property('caps', Gst.caps_from_string(caps))
+
+        rtsp_media.set_latency(500)
+        rtsp_media.set_do_retransmission(False)
 
         ctx = WyzeCameraMediaContext()
         ctx.media_info_id = random.randint(0, sys.maxsize)
