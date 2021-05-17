@@ -6,7 +6,7 @@ import traceback
 import warnings
 from queue import Queue
 from threading import Thread
-from typing import List, Dict, Tuple, Optional, Callable
+from typing import List, Dict, Tuple, Optional, Callable, Union
 
 from wyzecam.iotc import WyzeIOTC, WyzeIOTCSession, WyzeIOTCSessionState
 from wyzecam.api_models import WyzeCamera, WyzeAccount
@@ -49,10 +49,6 @@ class WyzeIOTCVideoMux:
 
     def unsubscribe(self, mac: str, subscriber_id: int) -> None:
         self.get_listener(mac).unsubscribe(subscriber_id)
-
-    def read_all(self, mac: str, subscriber_id: int, maxitems: Optional[int] = None) -> List[
-        Tuple[bytes, FrameInfoStruct]]:
-        return self.get_listener(mac).read_all(subscriber_id, maxitems=maxitems)
 
     def get_sample_frame_info(self, mac: str) -> Optional[FrameInfoStruct]:
         return self.get_listener(mac).example_frame_info
@@ -122,7 +118,6 @@ class WyzeIOTCVideoListener(Thread):
         super(WyzeIOTCVideoListener, self).__init__(daemon=True)
         self.session: WyzeIOTCSession = session
         self.camera: WyzeCamera = camera
-        self.subscribers: Dict[int, Queue[Tuple[bytes, FrameInfoStruct]]] = {}
         self._state = WyzeIOTCVideoListenerState.DISCONNECTED
         self.state_lock: threading.RLock = threading.RLock()
         self.max_queue_size: int = max_queue_size
@@ -130,7 +125,14 @@ class WyzeIOTCVideoListener(Thread):
         self.state_change_listeners: List[Callable[['WyzeIOTCVideoListener', WyzeIOTCVideoListenerState], None]] = []
         self.error: Optional[Exception] = None
         self.data_available_listeners: Dict[
-            int, Callable[['WyzeIOTCVideoListener'], None]] = {}
+            int, Callable[
+                [
+                    'WyzeIOTCVideoListener',
+                    Tuple[
+                        bytes,
+                        Union[tutk.FrameInfoStruct, tutk.FrameInfo3Struct]
+                    ]
+                ], None]] = {}
         self.retries = 0
 
     def add_state_change_listener(self,
@@ -224,7 +226,7 @@ class WyzeIOTCVideoListener(Thread):
 
         self.state = WyzeIOTCVideoListenerState.STREAMING
         for data in self.session.recv_video_data():
-            for subscriber_id, subscriber in list(self.subscribers.items()):
+            for subscriber_id in list(self.data_available_listeners.keys()):
                 self._try_add_data(data, subscriber_id)
             if self.state == WyzeIOTCVideoListenerState.PAUSE_REQUESTED:
                 self.state = WyzeIOTCVideoListenerState.PAUSED
@@ -234,9 +236,8 @@ class WyzeIOTCVideoListener(Thread):
 
     def _try_add_data(self, data, subscriber_id):
         try:
-            self.subscribers[subscriber_id].put_nowait(data)
             if subscriber_id in self.data_available_listeners:
-                self.data_available_listeners[subscriber_id](self)
+                self.data_available_listeners[subscriber_id](self, data)
         except queue.Full:
             warnings.warn(
                 f"Subscriber {subscriber_id} has hit the max queue size; "
@@ -244,36 +245,19 @@ class WyzeIOTCVideoListener(Thread):
             self.unsubscribe(subscriber_id)
 
     def subscribe(self, subscriber_id: int,
-                  callback: Optional[Callable[['WyzeIOTCVideoListener'], None]] = None) -> None:
-        if subscriber_id in self.subscribers:
+                  callback: Callable[['WyzeIOTCVideoListener'], None]) -> None:
+        if subscriber_id in self.data_available_listeners:
             return
 
-        self.subscribers[subscriber_id] = queue.Queue(maxsize=self.max_queue_size)
         if callback:
             self.data_available_listeners[subscriber_id] = callback
 
     def unsubscribe(self, subscriber_id: int) -> None:
-        if subscriber_id not in self.subscribers:
+        if subscriber_id not in self.data_available_listeners:
             warnings.warn(f"Double-unsubscribed to camera {self.camera.mac} with subscriber_id {subscriber_id}")
             return
 
-        del self.subscribers[subscriber_id]
-        if subscriber_id in self.data_available_listeners:
-            del self.data_available_listeners[subscriber_id]
-
-    def read_all(self, subscriber_id: int, maxitems: Optional[int] = None) -> List[Tuple[bytes, tutk.FrameInfoStruct]]:
-        items: List[Tuple[bytes, tutk.FrameInfoStruct]] = []
-        while True:
-            try:
-                if maxitems is not None and len(items) >= maxitems:
-                    break
-                q = self.subscribers[subscriber_id]
-                items.append(q.get_nowait())
-                q.task_done()
-            except queue.Empty:
-                break
-
-        return items
+        del self.data_available_listeners[subscriber_id]
 
     def disconnect(self):
         if self.state in [WyzeIOTCVideoListenerState.DISCONNECTED]:

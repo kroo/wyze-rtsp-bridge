@@ -70,28 +70,29 @@ class WyzeCameraMediaFactory(GstRtspServer.RTSPMediaFactory):
         self.last_frame_infos: Dict[str, tutk.FrameInfoStruct] = {}
         self.factory_id = random.randint(0, sys.maxsize)
 
-    def has_data(self, appsrc, ctx, listener: WyzeIOTCVideoListener):
-        if ctx.need_data:
-            self.send_data(appsrc, ctx)
+    def has_data(self,
+                 appsrc, ctx,
+                 listener: WyzeIOTCVideoListener,
+                 data: Tuple[bytes, tutk.FrameInfoStruct]):
+        # TODO: consider ctx.need_data (either throw out frames, or buffer internally?)
+        self.send_data(appsrc, ctx, data)
 
-    def send_data(self, appsrc, ctx):
+    def send_data(self, appsrc, ctx, data):
         mac = appsrc.mac
-        for frame, frame_info in self.mux.read_all(mac, self.factory_id, maxitems=10):
-            last_frame_info = self.last_frame_infos.get(mac) or self.mux.get_sample_frame_info(mac)
-            assert last_frame_info
-            buf = build_gst_buffer(frame, frame_info, last_frame_info, ctx)
+        frame, frame_info = data
+        last_frame_info = self.last_frame_infos.get(mac) or self.mux.get_sample_frame_info(mac)
+        assert last_frame_info
+        buf = build_gst_buffer(frame, frame_info, last_frame_info, ctx)
+        retval = appsrc.emit("push-buffer", buf)
+        if retval != Gst.FlowReturn.OK:
+            print(f"push returned {retval}, expected {Gst.FlowReturn.OK}")
 
-            retval = appsrc.emit("push-buffer", buf)
-            if retval != Gst.FlowReturn.OK:
-                print(f"push returned {retval}, expected {Gst.FlowReturn.OK}")
-
-            self.last_frame_infos[mac] = frame_info
+        self.last_frame_infos[mac] = frame_info
 
     def enough_data(self, apprc, ctx):
         ctx.need_data = False
 
     def need_data(self, appsrc, unused_length, ctx):
-        self.send_data(appsrc, ctx)
         ctx.need_data = True
 
     def do_create_element(self, url):
