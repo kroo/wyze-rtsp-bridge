@@ -26,4 +26,4 @@ _project_root = pathlib.Path(__file__).parent.parent
 
 
 def load_config(file: pathlib.Path = _project_root / 'config.yml') -> Config:
-    return Config.parse_obj(yaml.load(open(file), Loader=yaml.CSafeLoader))
+    return Config.parse_obj(yaml.load(open(file), Loader=yaml.SafeLoader))
