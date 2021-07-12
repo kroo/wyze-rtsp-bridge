@@ -8,7 +8,7 @@ from typing import Tuple, List, Dict
 from wyzecam import WyzeIOTC, WyzeCamera
 from wyzecam.tutk import tutk
 
-from .glib_init import GstRtspServer, Gst
+from .glib_init import GstRtspServer, Gst, GObject
 from wyze_rtsp_bridge.iotc_video_mux import WyzeIOTCVideoMux, WyzeIOTCVideoListener
 
 
@@ -23,19 +23,21 @@ class WyzeCameraMediaContext(ctypes.Structure):
 
 def build_gst_buffer(frame: bytes, frame_info: tutk.FrameInfoStruct,
                      last_frame_info: tutk.FrameInfoStruct,
-                     ctx: WyzeCameraMediaContext) -> Gst.Buffer:
+                     ctx: WyzeCameraMediaContext,
+                     compute_ts: bool = False) -> Gst.Buffer:
     buf = Gst.Buffer.new_wrapped(frame)
-    ts_s = Gst.util_uint64_scale_int(frame_info.timestamp, Gst.SECOND, 1)
-    ts_ms = Gst.util_uint64_scale_int(frame_info.timestamp_ms, Gst.USECOND, 1)
-    l_ts_s = Gst.util_uint64_scale_int(last_frame_info.timestamp, Gst.SECOND, 1)
-    l_ts_ms = Gst.util_uint64_scale_int(last_frame_info.timestamp_ms, Gst.USECOND, 1)
-    timestamp = ts_s + ts_ms
-    last_timestamp = l_ts_s + l_ts_ms
-    duration_calced = timestamp - last_timestamp
-    timestamp = ctx.timestamp
-    ctx.timestamp += duration_calced
-    buf.pts = timestamp
-    buf.duration = duration_calced
+    if compute_ts:
+        ts_s = Gst.util_uint64_scale_int(frame_info.timestamp, Gst.SECOND, 1)
+        ts_ms = Gst.util_uint64_scale_int(frame_info.timestamp_ms, Gst.USECOND, 1)
+        l_ts_s = Gst.util_uint64_scale_int(last_frame_info.timestamp, Gst.SECOND, 1)
+        l_ts_ms = Gst.util_uint64_scale_int(last_frame_info.timestamp_ms, Gst.USECOND, 1)
+        timestamp = ts_s + ts_ms
+        last_timestamp = l_ts_s + l_ts_ms
+        duration_calced = timestamp - last_timestamp
+        timestamp = ctx.timestamp
+        ctx.timestamp += duration_calced
+        buf.pts = timestamp
+        buf.duration = duration_calced
     return buf
 
 
@@ -96,7 +98,6 @@ class WyzeCameraMediaFactory(GstRtspServer.RTSPMediaFactory):
         ctx.need_data = True
 
     def do_create_element(self, url):
-        print(f"Create stream: {url.abspath}")
         mac = url.abspath[1:]
 
         frame_info = self.mux.get_sample_frame_info(mac)
@@ -114,7 +115,7 @@ class WyzeCameraMediaFactory(GstRtspServer.RTSPMediaFactory):
         elem = rtsp_media.get_element()
         appsrc = elem.get_by_name_recurse_up("mysrc")
         Gst.util_set_object_arg(appsrc, 'format', 'time')
-        print("media configure for camera ", appsrc.mac)
+        
         last_frame_info = self.mux.get_sample_frame_info(appsrc.mac)
         assert last_frame_info
 
@@ -126,9 +127,11 @@ class WyzeCameraMediaFactory(GstRtspServer.RTSPMediaFactory):
                f"framerate={framerate}/1," \
                f"stream-format=byte-stream,alignment=au"
         appsrc.set_property('caps', Gst.caps_from_string(caps))
+        appsrc.set_property('max-latency', 200)
+        appsrc.set_property('is-live', True)
+        appsrc.set_property('do-timestamp', True)
 
         rtsp_media.set_latency(500)
-        rtsp_media.set_do_retransmission(False)
 
         ctx = WyzeCameraMediaContext()
         ctx.media_info_id = random.randint(0, sys.maxsize)
@@ -153,7 +156,7 @@ class WyzeCameraMediaFactory(GstRtspServer.RTSPMediaFactory):
         elem = rtsp_media.get_element()
         appsrc = elem.get_by_name_recurse_up("mysrc")
 
-        print(f"new state: {state} for mac {str(ctx.mac)}")
+        print(f"new state: {GObject.enum_to_string(Gst.State, state)} for mac {ctx.mac.decode('ascii')}")
         if state == 4:
             callback = functools.partial(self.has_data, appsrc, ctx)
             self.mux.subscribe(ctx.mac.decode('ascii'), self.factory_id, callback)
