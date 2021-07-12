@@ -70,7 +70,6 @@ class GstServer:
             else:
                 success = False
         except:
-            traceback.print_exc()
             success = False
 
         if not success:
@@ -144,7 +143,7 @@ class GstServer:
         for camera in self.cameras:
             path = f"/{camera.mac.lower()}"
             m.add_factory(path, f)
-            print(f"added factory: {path} for camera {camera.nickname}")
+            print(f"{camera.nickname}: rtsp://{self.config.rtsp_server.host}:{self.config.rtsp_server.port}{path}")
 
     def attach_to_main_loop(self):
         self.server.attach(None)
