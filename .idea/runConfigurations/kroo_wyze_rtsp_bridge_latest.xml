@@ -1,0 +1,13 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="kroo/wyze-rtsp-bridge:latest" type="docker-deploy" factoryName="docker-image" server-name="Docker">
+    <deployment type="docker-image">
+      <settings>
+        <option name="imageTag" value="kroo/wyze-rtsp-bridge:latest" />
+        <option name="attachToContainerNeeded" value="true" />
+        <option name="command" value="bash" />
+        <option name="containerName" value="" />
+      </settings>
+    </deployment>
+    <method v="2" />
+  </configuration>
+</component>

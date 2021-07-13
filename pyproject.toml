@@ -39,6 +39,7 @@ rich = "^10.1.0"
 wyzecam = "^1.2.0"
 PyGObject = "^3.40.1"
 SQLAlchemy = {extras = ["mypy"], version = "^1.4.14"}
+pydantic = {extras = ["email"], version = "^1.8.2"}
 
 [tool.poetry.dev-dependencies]
 darglint = "^1.5.8"
@@ -56,7 +57,7 @@ pre-commit = "^2.9.3"
 [tool.black]
 # https://github.com/psf/black
 line-length = 80
-target-version = ["py37"]
+target-version = ["py39"]
 
 [tool.isort]
 # https://github.com/timothycrosley/isort/

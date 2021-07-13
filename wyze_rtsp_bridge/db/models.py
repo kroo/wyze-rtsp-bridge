@@ -1,6 +1,6 @@
-from sqlalchemy import Column, String, JSON, Integer
+from sqlalchemy import JSON, Column, Integer, String
 from sqlalchemy.orm import declarative_base
-from wyzecam import WyzeCredential
+from wyzecam.api_models import WyzeCredential
 
 Base = declarative_base()
 
