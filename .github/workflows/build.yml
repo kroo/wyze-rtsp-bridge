@@ -11,7 +11,7 @@ jobs:
 
     steps:
     - name: Install APT dependencies
-      run: sudo apt-get install -y libcairo-dev \
+      run: sudo apt-get update && sudo apt-get install -y libcairo-dev \
             build-essential \
             libgirepository1.0-dev \
             libgstrtspserver-1.0-dev \
