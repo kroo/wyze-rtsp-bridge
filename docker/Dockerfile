@@ -7,6 +7,7 @@ ENV LANG=C.UTF-8 \
 RUN apt-get update && \
   apt-get install -y --no-install-recommends \
     curl \
+    unzip \
     libcairo-dev \
     build-essential \
     libgirepository1.0-dev \
@@ -22,6 +23,13 @@ RUN apt-get update && \
     gstreamer1.0-doc \
     gstreamer1.0-tools \
   && rm -rf /var/lib/apt/lists/*
+
+RUN curl -sSL -o /tmp/TUTK_IOTC_Platform_14W42P1.zip https://github.com/nblavoie/wyzecam-api/raw/master/wyzecam-sdk/TUTK_IOTC_Platform_14W42P1.zip \
+ && unzip -q -d /tmp/TUTK_IOTC_Platform_14W42P1 /tmp/TUTK_IOTC_Platform_14W42P1.zip \
+ && cd /tmp/TUTK_IOTC_Platform_14W42P1/Lib/Linux/x64/ \
+ && g++ -fpic -shared -Wl,--whole-archive libAVAPIs.a libIOTCAPIs.a -Wl,--no-whole-archive -o libIOTCAPIs_ALL.so \
+ && cp libIOTCAPIs_ALL.so /usr/local/lib/ \
+ && rm -rf /tmp/TUTK_IOTC_Platform_14W42P1
 
 COPY pyproject.toml ./
 COPY wyze_rtsp_bridge ./wyze_rtsp_bridge
