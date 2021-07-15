@@ -38,7 +38,7 @@ typer = { extras = ["all"], version = "^0.3.2" }
 rich = "^10.1.0"
 wyzecam = "^1.2.0"
 PyGObject = "^3.40.1"
-SQLAlchemy = {extras = ["mypy"], version = "^1.4.14"}
+SQLAlchemy = {extras = ["mypy"], version = "^1.4.21"}
 pydantic = {extras = ["email"], version = "^1.8.2"}
 
 [tool.poetry.dev-dependencies]
