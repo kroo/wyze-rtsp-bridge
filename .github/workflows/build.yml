@@ -26,7 +26,7 @@ jobs:
             gstreamer1.0-doc \
             gstreamer1.0-tools
 
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3.1.0
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v2.2.1
       with:
